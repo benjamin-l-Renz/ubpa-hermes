@@ -53,7 +53,16 @@
 
       <label class="flex items-center gap-2 text-gray-700">
         <input type="checkbox" name="checkbox" class="size-4 accent-blue-600" />
-        <span>I agree to the terms</span>
+        <span>
+          I agree to the 
+          <a
+            href="/privacy"
+            hx-get="/privacy"
+            hx-target="#modal"
+            hx-swap="innerHTML"
+            class="text-blue-600 underline cursor-pointer"
+          >data protection agrement</a>
+        </span>
       </label>
 
       <button
@@ -64,4 +73,5 @@
       </button>
     </form>
   </body>
+    <div id="modal"></div>
 </html>

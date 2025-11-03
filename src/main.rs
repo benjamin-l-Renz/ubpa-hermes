@@ -40,6 +40,10 @@ struct UploadTemplate<'a> {
     error: &'a str,
 }
 
+#[derive(Template, WebTemplate)]
+#[template(path = "privacy.html")]
+struct PrivacyTemplate;
+
 #[derive(Debug, MultipartForm)]
 /// Contains all the variables that are send to the backend from the html form
 struct UploadForm {
@@ -136,6 +140,18 @@ fn detect_pdf(data: &[u8]) -> bool {
     }
 }
 
+
+async fn privacy() -> Result<impl Responder, Error> {
+    Ok(PrivacyTemplate {})
+}
+
+async fn close_modal() -> Result<impl Responder, Error> {
+    Ok(actix_web::HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body("")) // clears #modal
+}
+    
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     println!("Server running at http://127.0.0.1:8080");
@@ -154,6 +170,8 @@ async fn main() -> std::io::Result<()> {
             // Route for HTMX dynamic response
             // Default route -> serve the main HTML
             .route("/load", web::post().to(load))
+            .route("/privacy", web::get().to(privacy))
+            .route("/close-modal", web::get().to(close_modal))
             .default_service(
                 web::get()
                     .to(|| async { fs::NamedFile::open_async("./static/html/index.html").await }),
