@@ -6,4 +6,5 @@ use askama_web::WebTemplate;
 /// Displays an given error on a html div
 pub struct UploadTemplate<'a> {
     pub error: &'a str,
+    pub token: String,
 }

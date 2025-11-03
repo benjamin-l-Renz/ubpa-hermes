@@ -6,6 +6,8 @@ use actix_multipart::form::bytes::Bytes;
 use actix_multipart::form::text::Text;
 use actix_web::Error;
 use actix_web::Responder;
+use actix_web::web;
+use sqlx::SqlitePool;
 
 #[derive(Debug, MultipartForm)]
 /// Contains all the variables that are send to the backend from the html form
@@ -19,12 +21,16 @@ pub struct UploadForm {
 }
 
 /// Gets the post request from the html form with all atributes
-pub async fn load(MultipartForm(form): MultipartForm<UploadForm>) -> Result<impl Responder, Error> {
+pub async fn load(
+    MultipartForm(form): MultipartForm<UploadForm>,
+    pool: web::Data<SqlitePool>,
+) -> Result<impl Responder, Error> {
     // Check if they arent files sended
     if form.files.is_empty() {
         println!("You should send files");
         return Ok(UploadTemplate {
             error: "You must upload a file",
+            token: "".to_string(),
         });
     }
 
@@ -34,6 +40,7 @@ pub async fn load(MultipartForm(form): MultipartForm<UploadForm>) -> Result<impl
     if count > 10 {
         return Ok(UploadTemplate {
             error: "To many files (max: 10)",
+            token: "".to_string(),
         });
     }
 
@@ -47,6 +54,7 @@ pub async fn load(MultipartForm(form): MultipartForm<UploadForm>) -> Result<impl
             println!("to big");
             return Ok(UploadTemplate {
                 error: "file is to big",
+                token: "".to_string(),
             });
         }
 
@@ -55,6 +63,7 @@ pub async fn load(MultipartForm(form): MultipartForm<UploadForm>) -> Result<impl
         if !detect_pdf(&f.data) {
             return Ok(UploadTemplate {
                 error: "file must be a pdf",
+                token: "".to_string(),
             });
         } else {
             // add path into the database
@@ -63,24 +72,29 @@ pub async fn load(MultipartForm(form): MultipartForm<UploadForm>) -> Result<impl
         }
     }
 
+    let email = form.email;
+
     // Check the email format
-    match form.email {
+    match &email {
         Some(email) => {
             if email.is_empty() {
                 return Ok(UploadTemplate {
                     error: "no email suplied",
+                    token: "".to_string(),
                 });
-            } else if is_valid_email(&email) {
+            } else if is_valid_email(email) {
                 println!("{}", email.as_str())
             } else {
                 return Ok(UploadTemplate {
                     error: "email must be a valid format",
+                    token: "".to_string(),
                 });
             }
         }
         None => {
             return Ok(UploadTemplate {
                 error: "no email suplied",
+                token: "".to_string(),
             });
         }
     }
@@ -91,9 +105,23 @@ pub async fn load(MultipartForm(form): MultipartForm<UploadForm>) -> Result<impl
     if !checkbox_value {
         return Ok(UploadTemplate {
             error: "you need to agree to the Nutzerbedingungen",
+            token: "".to_string(),
         });
     }
 
+    let token = uuid::Uuid::new_v4();
+    println!("{}", token);
+
+    sqlx::query("INSERT INTO tokens (email, token) VALUES (?, ?)")
+        .bind(email.unwrap().to_string())
+        .bind(token.to_string())
+        .execute(pool.get_ref())
+        .await
+        .unwrap();
+
     // If succesfull return nothing
-    Ok(UploadTemplate { error: "" })
+    Ok(UploadTemplate {
+        error: "",
+        token: token.to_string(),
+    })
 }

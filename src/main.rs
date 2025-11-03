@@ -15,16 +15,35 @@ use actix_web::{App, HttpServer, web};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    println!("Server running at http://127.0.0.1:8080");
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .connect("sqlite://db.sqlite")
+        .await
+        .unwrap();
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT
+            email TEXT NOT NULL,
+            token TEXT NOT NULL
+        )
+        "#,
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
 
     std::fs::create_dir_all("./upload")?;
 
-    HttpServer::new(|| {
+    println!("Server running at http://127.0.0.1:8080");
+
+    HttpServer::new(move || {
         App::new()
             // Set a payload so people cant upload extremely big files
             .app_data(PayloadConfig::new(10 * 1024 * 1024))
             // Set the location for temporary files
             .app_data(TempFileConfig::default().directory("./upload"))
+            .app_data(web::Data::new(pool.clone()))
             // Serve everything under /static/
             .service(fs::Files::new("/html/", "./static/html/").prefer_utf8(true))
             .service(fs::Files::new("/js/", "./static/js/").show_files_listing())
