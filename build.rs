@@ -8,10 +8,8 @@ fn main() {
     let status = Command::new("npx")
         .args([
             "@tailwindcss/cli",
-            "-i",
-            "./static/html/input.css",
-            "-o",
-            "./static/html/output.css",
+            "-i", "./static/html/input.css",
+            "-o", "./static/html/output.css",
             "--minify",
         ])
         .status()
