@@ -1,6 +1,5 @@
 use actix_web::HttpResponse;
-use sqlx::sqlite::SqliteRow;
-use sqlx::{Row, SqlitePool};
+use sqlx::SqlitePool;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct LoginForm {
