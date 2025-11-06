@@ -26,7 +26,11 @@ pub async fn remove_state(
         Ok(Some(record)) => {
             let value: String = record.get("value");
             // Create the email
-            send_email(value, config.get_ref());
+            send_email(
+                value,
+                config.get_ref(),
+                crate::send_email::EmailPresets::Removed,
+            );
         }
         Ok(None) => {}
         Err(err) => {

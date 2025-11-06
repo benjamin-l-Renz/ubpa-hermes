@@ -1,21 +1,43 @@
 use lettre::Transport;
 
 #[derive(serde::Deserialize, Clone)]
+pub enum EmailPresets {
+    Submit,
+    Removed,
+    ChangedState,
+}
+
+#[derive(serde::Deserialize, Clone)]
 pub struct EmailConfig {
     pub email: String,
     pub password: String,
-    pub subject: String,
-    pub email_content: String,
+    submit_subject: String,
+    submit: String,
+    removed_subject: String,
+    removed: String,
+    changed_state_subject: String,
+    changed_state: String,
 }
 
-/// Sends an email to a pre configured email adress
-pub fn send_email(email: String, config: &EmailConfig) {
+/// Sends an email to a pre configured email address
+pub fn send_email(email: String, config: &EmailConfig, preset: EmailPresets) {
+    let subject = match preset {
+        EmailPresets::Submit => &config.submit_subject,
+        EmailPresets::ChangedState => &config.changed_state_subject,
+        EmailPresets::Removed => &config.removed_subject,
+    };
+
+    let email_content = match preset {
+        EmailPresets::Submit => &config.submit,
+        EmailPresets::ChangedState => &config.changed_state,
+        EmailPresets::Removed => &config.removed,
+    };
     // Create the email
     let lettre_email = lettre::Message::builder()
         .from(config.email.parse().unwrap())
         .to(email.parse().unwrap())
-        .subject(&config.subject)
-        .body(config.email_content.clone())
+        .subject(subject)
+        .body(email_content.clone())
         .unwrap();
 
     let creds = lettre::transport::smtp::authentication::Credentials::new(

@@ -23,7 +23,11 @@ Example config.json:
 {
   "email": "your-email@example.com",
   "password": "password",
-  "subject": "Test",
-  "email_content": "Hello test from rust"
+  "submit_subject": "",
+  "submit": "",
+  "removed_subject": "",
+  "removed": "",
+  "changed_state_subject": "",
+  "changed_state": ""
 }
 ```

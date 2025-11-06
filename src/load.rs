@@ -131,7 +131,7 @@ pub async fn load(
     println!("{}, {}, {}", token, &email, state);
 
     // Send an email
-    send_email::send_email(email, config.get_ref());
+    send_email::send_email(email, config.get_ref(), send_email::EmailPresets::Submit);
 
     // If succesfull return nothing
     Ok(UploadTemplate {

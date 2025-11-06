@@ -7,7 +7,9 @@
     },
     "cSpell.words": [
         "actix",
+        "chrono",
         "lettre",
+        "sqlx",
         "Tera"
     ],
 

@@ -33,7 +33,11 @@ pub async fn change_state(
             let value: String = row.get("value");
 
             // Send an email to the email we got from the db
-            send_email::send_email(value, config.get_ref());
+            send_email::send_email(
+                value,
+                config.get_ref(),
+                send_email::EmailPresets::ChangedState,
+            );
 
             // Change the state
             if state == 1 {
