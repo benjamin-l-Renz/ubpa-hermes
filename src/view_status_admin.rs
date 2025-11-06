@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use sqlx::Row;
 use sqlx::SqlitePool;
 
@@ -19,12 +21,12 @@ pub async fn view_status_admin(
     let password =
         std::env::var("ADMIN_PASSWORD").expect("Failed to get enviroment variable 'ADMIN_PASSWORD' ");*/
 
-    let mut users: Vec<String> = Vec::new();
+    let mut users: HashMap<String, String> = HashMap::new();
 
     if form.username == "admin" && form.password == "12345" {
         let pool = pool.get_ref();
 
-        let rows = sqlx::query("SELECT key, value, state, created_at FROM aplicants")
+        let rows = sqlx::query("SELECT key, value, state, created_at FROM applicants")
             .fetch_all(pool)
             .await
             .unwrap();
@@ -49,10 +51,12 @@ pub async fn view_status_admin(
                 "{},  {}  state: {},  created at: {}",
                 key, value, real_state, user_created_at
             );
-            users.push(user);
+            users.insert(key, user);
         }
 
-        return Ok(AdminDashboardTemplate { applicants: users });
+        return Ok(AdminDashboardTemplate {
+            applicants: users.into_iter().collect::<Vec<_>>(),
+        });
     }
     Ok(AdminDashboardTemplate {
         applicants: Vec::new(),

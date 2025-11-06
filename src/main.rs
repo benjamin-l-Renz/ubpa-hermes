@@ -1,3 +1,4 @@
+mod change_state;
 mod check_email;
 mod check_pdf;
 mod close_popup;
@@ -11,6 +12,7 @@ mod templates;
 mod view_status;
 mod view_status_admin;
 
+use crate::change_state::change_state;
 use crate::close_popup::close_modal;
 use crate::home::home;
 use crate::load::load;
@@ -37,7 +39,7 @@ pub async fn background_worker(pool: SqlitePool) {
         println!("Running scheduled task...");
         let current_time = Local::now().naive_local();
 
-        let rows = sqlx::query("SELECT key, value, state, created_at FROM users")
+        let rows = sqlx::query("SELECT key, value, state, created_at FROM applicants")
             .fetch_all(&pool)
             .await
             .unwrap();
@@ -132,6 +134,7 @@ async fn main() -> std::io::Result<()> {
             .route("/home", web::get().to(home))
             .route("/login_admin", web::get().to(login_admin))
             .route("/view-status-admin", web::post().to(view_status_admin))
+            .route("/change_state", web::post().to(change_state))
             .default_service(
                 web::get()
                     .to(|| async { fs::NamedFile::open_async("./static/html/index.html").await }),
