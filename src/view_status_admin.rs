@@ -14,12 +14,12 @@ pub async fn view_status_admin(
     form: actix_web::web::Form<AdminLoginForm>,
     pool: actix_web::web::Data<SqlitePool>,
 ) -> Result<impl actix_web::Responder, actix_web::Error> {
-    /*let username =
-        std::env::var("ADMIN_USERNAME").expect("Failed to get enviroment variable 'ADMIN_USERNAME' ");
-    let password =
-        std::env::var("ADMIN_PASSWORD").expect("Failed to get enviroment variable 'ADMIN_PASSWORD' ");*/
+    let username = std::env::var("ADMIN_USERNAME")
+        .expect("Failed to get enviroment variable 'ADMIN_USERNAME' ");
+    let password = std::env::var("ADMIN_PASSWORD")
+        .expect("Failed to get enviroment variable 'ADMIN_PASSWORD' ");
 
-    if form.username == "admin" && form.password == "12345" {
+    if form.username == username && form.password == password {
         let pool = pool.get_ref();
 
         return dashboard::dashboard(pool).await;
