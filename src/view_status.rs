@@ -1,4 +1,4 @@
-use crate::templates::staus_template::StatusTemplate;
+use crate::templates::status_template::StatusTemplate;
 use sqlx::Row;
 use sqlx::SqlitePool;
 
