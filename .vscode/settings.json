@@ -5,6 +5,13 @@
     "[html]": {
         "editor.defaultFormatter": "vscode.html-language-features"
     },
+    "cSpell.words": [
+        "actix",
+        "chrono",
+        "lettre",
+        "sqlx",
+        "Tera"
+    ],
 
 
 }

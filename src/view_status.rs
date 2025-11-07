@@ -1,4 +1,5 @@
-use crate::templates::staus_template::StatusTemplate;
+use crate::templates::status_template::StatusTemplate;
+use sqlx::Row;
 use sqlx::SqlitePool;
 
 #[derive(serde::Deserialize, Debug)]
@@ -7,13 +8,14 @@ pub struct LoginForm {
     pub email: String,
 }
 
+/// Get the state of the current user
 pub async fn view_status(
     form: actix_web::web::Form<LoginForm>,
     pool: actix_web::web::Data<SqlitePool>,
 ) -> Result<impl actix_web::Responder, actix_web::Error> {
     println!("{}", form.email);
     println!("{}", form.token);
-    let row = sqlx::query("SELECT 1 FROM users WHERE key = ? AND value = ?")
+    let row = sqlx::query("SELECT key, value, state FROM applicants WHERE key = ? AND value = ?")
         .bind(&form.token)
         .bind(&form.email)
         .fetch_optional(pool.as_ref())
@@ -25,15 +27,26 @@ pub async fn view_status(
 
     println!("loaded and got data from DB");
 
-    if row.is_some() {
+    if let Some(row) = row {
         // Found
+        let state: i32 = row.get("state");
+
+        let displayed_state = match state {
+            1 => "Send",
+            2 => "In Progress",
+            _ => "Unknown state",
+        };
+        println!("state is: {}", state);
         println!("Found you");
-        Ok(StatusTemplate { error: "" })
+        Ok(StatusTemplate {
+            error: "",
+            state: displayed_state,
+        })
     } else {
         println!("Fake!!!!");
-        // Not found — common case, just respond accordingly
         Ok(StatusTemplate {
             error: "User not found",
+            state: "",
         })
     }
 }

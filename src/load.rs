@@ -1,21 +1,14 @@
 use crate::check_email::is_valid_email;
 use crate::check_pdf::detect_pdf;
+use crate::send_email;
+use crate::send_email::EmailConfig;
 use crate::templates::upload_template::UploadTemplate;
 use actix_multipart::form::MultipartForm;
 use actix_multipart::form::bytes::Bytes;
 use actix_multipart::form::text::Text;
 use actix_web::Error;
 use actix_web::Responder;
-use lettre::Transport;
 use sqlx::SqlitePool;
-
-#[derive(serde::Deserialize)]
-struct EmailConfig {
-    email: String,
-    password: String,
-    subject: String,
-    email_content: String,
-}
 
 #[derive(Debug, MultipartForm)]
 /// Contains all the variables that are send to the backend from the html form
@@ -32,6 +25,7 @@ pub struct UploadForm {
 pub async fn load(
     MultipartForm(form): MultipartForm<UploadForm>,
     pool: actix_web::web::Data<SqlitePool>,
+    config: actix_web::web::Data<EmailConfig>,
 ) -> Result<impl Responder, Error> {
     // Check if they arent files sended
     if form.files.is_empty() {
@@ -110,6 +104,7 @@ pub async fn load(
     // Get the value of the checkbox
     let checkbox_value = form.checkbox.as_ref().map(|t| t.0 == "on").unwrap_or(false);
 
+    // If the checkbox isnt checked it returns an error
     if !checkbox_value {
         return Ok(UploadTemplate {
             error: "you need to agree to the Nutzerbedingungen",
@@ -117,44 +112,26 @@ pub async fn load(
         });
     }
 
+    // Create Uuid v4 unique token
     let token = uuid::Uuid::new_v4();
     println!("{}", token);
 
     let email = email.unwrap().to_string();
 
-    sqlx::query(r#"INSERT INTO users (key, value) VALUES (?, ?)"#)
+    let state = 1;
+
+    // Insert applicant information into db
+    sqlx::query(r#"INSERT INTO applicants (key, value, state) VALUES (?, ?, ?)"#)
         .bind(token.to_string())
         .bind(&email)
+        .bind(state)
         .execute(pool.as_ref())
         .await
         .unwrap();
-    println!("{}, {}", token, &email);
+    println!("{}, {}, {}", token, &email, state);
 
-    let config_data = std::fs::read_to_string("./config.json")
-        .expect("Failed to read config.json please check if the file was suplied");
-    let config: EmailConfig = serde_json::from_str(&config_data).expect("Failed to parse JSON");
-
-    let lettre_email = lettre::Message::builder()
-        .from(config.email.parse().unwrap())
-        .to(email.parse().unwrap())
-        .subject(config.subject)
-        .body(config.email_content)
-        .unwrap();
-
-    let creds = lettre::transport::smtp::authentication::Credentials::new(
-        config.email.clone(),
-        config.password.clone(),
-    );
-
-    let mailer = lettre::SmtpTransport::relay("smtp.gmail.com")
-        .unwrap()
-        .credentials(creds)
-        .build();
-
-    match mailer.send(&lettre_email) {
-        Ok(_) => println!("Email sent successfully!"),
-        Err(e) => println!("Could not send email: {}", e),
-    }
+    // Send an email
+    send_email::send_email(email, config.get_ref(), send_email::EmailPresets::Submit);
 
     // If succesfull return nothing
     Ok(UploadTemplate {

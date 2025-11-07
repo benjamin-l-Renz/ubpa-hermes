@@ -1,0 +1,22 @@
+{% if applicants.is_empty() %}
+<p>There arent any applicants if you think this is a bug please report it</p>
+{% else %}
+<ul>
+    {% for (key, applicant) in applicants %}
+    <li class="flex items-center justify-between bg-gray-800 text-white p-2 rounded">
+        <span>{{ key }} — {{ applicant }}</span>
+
+        <!-- Button that posts the key -->
+        <button class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded" hx-post="/change_state" hx-target="body"
+            hx-swap="innerHTML" hx-vals='{"key": "{{ key }}"}'>
+            Change State
+        </button>
+
+        <button class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded" hx-post="/remove_state" hx-target="body"
+            hx-swap="innerHTML" hx-vals='{"key": "{{ key }}"}'>
+            Change State
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
